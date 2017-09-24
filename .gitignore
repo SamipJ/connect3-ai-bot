@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+original.py
+check.py
+gui-2.py
+result.txt
