@@ -1,5 +1,5 @@
 import copy
-
+import random
 class mystate:
     def __init__(self,board,action,player):
         self.player=player
@@ -11,11 +11,21 @@ class mystate:
             return 2
         else:
             return 1
+    
+        
+    def __eq__(self,other):
+        return self.__dict__==other.__dict__
+
+    def __ne__(self, other):
+        return (not self.__eq__(other))
+    
+    def __hash__(self):
+        return hash(self.__repr__())
 
     def __str__(self):
-        return self.action
+        return str(self.board)+" "+str(self.player)
     def __repr__(self):
-        return str(self.action)
+        return str(self.board)+" "+str(self.player)
 
     def succesor_function(self):
         succesorlist=[]
@@ -119,48 +129,76 @@ def terminal_test(state,bot):
         return False,0
 
 
-def minimax(state,bot):
-    print state.board,"max"
+def minimax(state,bot,seen):
+    # print state.board,"max"
     maximumvalue=-2
+    # seen={}
     action="No move possible"
-    next1=None
+    nextsuccesor=None
     isterminal,utilityvalue = terminal_test(state,bot) 
     if isterminal:
-        print ("utilityvalue",utilityvalue)
+        # print ("utilityvalue",utilityvalue)
+        # print state, utilityvalue
         return utilityvalue
     for succesor in state.succesor_function():
-        value=min_value(succesor,bot)
+        value=min_value(succesor,bot,seen)
+        # print seen
+        print "value: ",value
         # print ("value",value)
         if maximumvalue < value:
             maximumvalue=value
-            action=succesor.action
-            next1=succesor
-    print action,state.player
-    return action,next1
+            nextsuccesor=[]
+            nextsuccesor.append(succesor.action)
+        elif maximumvalue==value:
+            nextsuccesor.append(succesor.action)
+    # print nextsuccesor
+    action=random.choice(nextsuccesor)
+    # print action,state.player
+    return action#,next1.board
 
-def max_value(state,bot):
-    print state.board,"max"
+def max_value(state,bot,seen):
+    # print state.board,"max"
     isterminal,utilityvalue = terminal_test(state,bot) 
-    if isterminal: return utilityvalue
+    if isterminal:
+        # print state , utilityvalue
+        return utilityvalue
     maximumvalue=-2
     for succesor in state.succesor_function():
-        maximumvalue=max(maximumvalue,min_value(succesor,bot))
+        if seen.has_key(succesor):
+            # print "yeh2"
+            value=seen[succesor]
+        else:
+            # print str(succesor.board)+" "+str(succesor.player)
+            value=min_value(succesor,bot,seen)
+            seen[succesor]=value
+            # print str(succesor.board)+" "+str(succesor.player)
+            # print seen
+        maximumvalue=max(maximumvalue,value)
     return maximumvalue
 
-def min_value(state,bot):
-    print state.board,"min"
+def min_value(state,bot,seen):
+    # print state.board,"min"
     isterminal,utilityvalue = terminal_test(state,bot) 
-    if isterminal: return utilityvalue
+    if isterminal:
+        # print state , utilityvalue
+        return utilityvalue
     minimumvalue=2
     for succesor in state.succesor_function():
-        minimumvalue=min(minimumvalue,max_value(succesor,bot))
+        if seen.has_key(succesor):
+            # print "yeh"
+            value=seen[succesor]
+        else:
+            value=max_value(succesor,bot,seen)
+            seen[succesor]=value
+        minimumvalue=min(minimumvalue,value)
     return minimumvalue
 
 if __name__=="__main__":
-    board=[[1,2,1,0],[2,2,1,0],[1,1,2,0],[2,1,2,0]]
-    initialstate=mystate(board,None,2)
-    curstate=initialstate
-    # while(curstate!=None):
-    a,curstate=minimax(curstate,2)
+    print "Use finalgui.py"
+    # board=[[1,2,1,0],[2,2,1,0],[1,1,2,0],[2,1,2,0]]
+    # initialstate=mystate(board,None,2)
+    # curstate=initialstate
+    # # while(curstate!=None):
+    # a,curstate=minimax(curstate,2)
         # if curstate==None: break
         # a,curstate=minimax(curstate,2)
