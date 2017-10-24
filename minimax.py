@@ -1,3 +1,5 @@
+#SAMIP JASANI 2015A7PS0127P
+
 import copy
 import random
 class mystate:
@@ -195,10 +197,3 @@ def min_value(state,bot,seen):
 
 if __name__=="__main__":
     print "Use finalgui.py"
-    # board=[[1,2,1,0],[2,2,1,0],[1,1,2,0],[2,1,2,0]]
-    # initialstate=mystate(board,None,2)
-    # curstate=initialstate
-    # # while(curstate!=None):
-    # a,curstate=minimax(curstate,2)
-        # if curstate==None: break
-        # a,curstate=minimax(curstate,2)

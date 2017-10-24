@@ -1,3 +1,5 @@
+#SAMIP JASANI 2015A7PS0127P
+
 import copy
 import random
 class mystate:
@@ -143,6 +145,8 @@ def myminimax(state,bot,seen):
         elif maximumvalue==value:
             nextsuccesor.append((depth,succesor.action))
     # print nextsuccesor
+    random.shuffle(nextsuccesor)
+    # print nextsuccesor
     if maximumvalue==-1:
         nextsuccesor.sort(reverse=True)
         depth,action=nextsuccesor[0]
@@ -179,6 +183,7 @@ def max_value(state,bot,seen):
         elif maximumvalue==value:
             nextsuccesor.append(depth)
     # if maximumvalue==1:
+    random.shuffle(nextsuccesor)
     nextsuccesor.sort()
     depth=nextsuccesor[0]+1
     # else:
@@ -208,6 +213,7 @@ def min_value(state,bot,seen):
         elif minimumvalue==value:
             nextsuccesor.append(depth)
     # if minimumvalue==1:
+    random.shuffle(nextsuccesor)
     nextsuccesor.sort()
     depth=nextsuccesor[0]+1
     # else:

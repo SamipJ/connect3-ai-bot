@@ -1,3 +1,5 @@
+#SAMIP JASANI 2015A7PS0127P
+
 import copy
 import random
 class mystate:
@@ -129,18 +131,22 @@ def terminal_test(state,bot):
         return False,0
 
 
-def alphabeta(state,bot):
-    value,action=max_value(state,bot,-2,2)
+def alphabeta(state,bot,seen):
+    value,action=max_value(state,bot,-2,2,seen)
     return action
 
-def max_value(state,bot,alpha,beta):
+def max_value(state,bot,alpha,beta,seen):
     isterminal,utilityvalue = terminal_test(state,bot) 
     if isterminal:
         return utilityvalue,None
     action=None
     value=-2
     for succesor in state.succesor_function():
-        temp,_=min_value(succesor,bot,alpha,beta)
+        if succesor in seen:
+            temp,tempaction=seen[succesor]
+        else:
+            temp,tempaction=min_value(succesor,bot,alpha,beta,seen)
+            seen[succesor]=(temp,tempaction)
         if temp>value:
             value=temp
             action=succesor.action
@@ -149,14 +155,19 @@ def max_value(state,bot,alpha,beta):
         alpha=max(alpha,value)
     return value,action
 
-def min_value(state,bot,alpha,beta):
+def min_value(state,bot,alpha,beta,seen):
     isterminal,utilityvalue = terminal_test(state,bot) 
     if isterminal:
         return utilityvalue,None
     value=2
     action=None
     for succesor in state.succesor_function():
-        temp,_=max_value(succesor,bot,alpha,beta)
+        if succesor in seen:
+            temp,tempaction=seen[succesor]
+        else:
+            temp,tempaction=max_value(succesor,bot,alpha,beta,seen)
+            seen[succesor]=(temp,tempaction)
+        # temp,_=max_value(succesor,bot,alpha,beta)
         if temp<value:
             value=temp
             action=succesor.action

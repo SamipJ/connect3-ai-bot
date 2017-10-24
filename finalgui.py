@@ -1,11 +1,35 @@
+#SAMIP JASANI 2015A7PS0127P
 from minimax import *
 from alphabeta import *
 from myversion import *
 import random
 import turtle
+from time import time
+import sys
+
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
+
 def color(x,y,player,screen):
     t = turtle.Turtle()
-    screen.tracer(1)
+    # screen.tracer(1)
     t.speed(0)
     t.ht()
     if player == 1:
@@ -22,26 +46,41 @@ def color(x,y,player,screen):
     t.penup()
     t.end_fill()
 
+def erasableWrite(tortoise, name, font, reuse=None):
+    eraser = turtle.Turtle() if reuse is None else reuse
+    eraser.hideturtle()
+    eraser.up()
+    eraser.setposition(tortoise.position())
+    eraser.color("blue")
+    eraser.write(name, font=font, align="left")
+    return eraser
 
 class ConnectThree:
 
-    def __init__(self):
-        # self.player = 1 #BOT First
-        self.player = 2 #Human First
+    def __init__(self,algo):
         # changes player every time a successful move has been made
-        
+        if algo=="minimax":
+            self.algo=minimax
+        elif algo=="alphabeta":
+            self.algo=alphabeta
+        else:
+            self.algo=myminimax
+        self.screenSetup(algo)
+
+    def screenSetup(self,algo):
+        self.player = 1 #BOT First
+        # self.player = 2 #Human First
         self.board=[[0]*4 for _ in range(4)]
         self.seen={}
-        self.screenSetup()
-
-    def screenSetup(self):
-
         self.screen = turtle.Screen()
         self.screen.setup(width=875,height=600)
         # self.screen.reset()
         self.screen.setworldcoordinates(-90,-10,110,110)
         self.screen.bgcolor("white")
         self.screen.tracer(0)
+        
+        
+        
         # self.startX = 
         self.drawer = turtle.Turtle()
         self.drawer.ht()
@@ -80,7 +119,29 @@ class ConnectThree:
                     color(row_list[i],col_list[j],1,self.screen)
                 if self.board[i][j]==2:
                     color(row_list[i],col_list[j],2,self.screen)
-        self.screen.onclick(self.clicked)
+        
+        t = turtle.Turtle()
+        t.hideturtle()
+        t.up()
+        t.goto(-80,85)
+        t.write("Restart Using :", font=("Arial", 20, "normal"))
+        t.goto(-70,70)
+        t.write("Minimax Algorithm", font=("Arial", 16, "normal"))
+        t.goto(-70,55)
+        t.write("Alpha-Beta Pruning", font=("Arial", 16, "normal"))
+        t.goto(-70,40)
+        t.write("Minimax using Depth Heuristic", font=("Arial", 16, "normal"))
+        t.goto(-80,25)
+        t.write("Exit", font=("Arial", 20, "normal"))
+        self.drawer.hideturtle()
+        self.drawer.up()
+        self.drawer.goto(-80,10)
+        if algo != "blank":
+            self.erasable = erasableWrite(self.drawer, "Click anywhere to start", font=("Arial", 20, "normal"))
+            self.screen.onclick(self.clicked)
+        else:
+            self.erasable = erasableWrite(self.drawer, "No game selected", font=("Arial", 20, "normal"))
+            self.screen.onclick(self.restart)
         self.screen.listen()
 
 
@@ -90,102 +151,67 @@ class ConnectThree:
         else:
             self.player = 1
 
-
-    # def checkForWinner(self):
-    
-    #     for i in range(4):
-    #         for j in range(4):
-
-    #             #to check each tile vertically upwards
-    #             try:
-    #                 player1 = 0
-    #                 player2 = 0
-    #                 for k in range(3):
-    #                     space = self.grid[i][j+k]
-    #                     if space.__repr__() == 1:
-    #                         player1 += 1
-    #                     if space.__repr__() == 2:
-    #                         player2 += 1
-    #                 if player1 == 3:
-    #                     print("Congrats! Player 1 -green- won in column {} :)".format(i+1))
-    #                     turtle.exitonclick()
-    #                 elif player2 == 3:
-    #                     print("Congrats! Player 2 -purple- won in column {}! :)".format(i+1))
-    #                     turtle.exitonclick()
-    #             except:
-    #                 pass
-
-    #             #to check each tile horizontally to the right
-    #             try:
-    #                 player1 = 0
-    #                 player2 = 0
-    #                 for k in range(3):
-    #                     space = self.grid[i+k][j]
-    #                     if space.__repr__() == 1:
-    #                         player1 += 1
-    #                     if space.__repr__() == 2:
-    #                         player2 += 1
-    #                 if player1 == 3:
-    #                     print("Congrats! Player 1 -green- won in row {}! :)".format(j+1))
-    #                     turtle.exitonclick()
-    #                 elif player2 == 3:
-    #                     print("Congrats! Player 2 -purple- won in row {}! :)".format(j+1))
-    #                     turtle.exitonclick()
-    #             except:
-    #                 pass
-
-    #             #to check each tile diagonally up to the right
-    #             try:
-    #                 player1 = 0
-    #                 player2 = 0
-    #                 for k in range(3):
-    #                     space = self.grid[i+k][j+k]
-    #                     if space.__repr__() == 1:
-    #                         player1 += 1
-    #                     if space.__repr__() == 2:
-    #                         player2 += 1
-    #                 if player1 == 3:
-    #                     print("Congrats! Player 1 -green- won with a diagonal! :)")
-    #                     turtle.exitonclick()
-    #                 elif player2 == 3:
-    #                     print("Congrats! Player 2 -purple- won with a diagonal! :)")
-    #                     turtle.exitonclick()
-    #             except:
-    #                 pass
-
-    #             #to check each tile diagonally up to the left
-    #             try:
-    #                 player1 = 0
-    #                 player2 = 0
-    #                 for k in range(3):
-    #                     space = self.grid[i-k][j+k]
-    #                     if space.__repr__() == 1:
-    #                         player1 += 1
-    #                     if space.__repr__() == 2:
-    #                         player2 += 1
-    #                 if player1 == 3:
-    #                     print("Congrats! Player 1 -green- won with a diagonal! :)")
-    #                     turtle.exitonclick()
-    #                 if player2 == 3:
-    #                     print("Congrats! Player 2 -purple- won with a diagonal! :)")
-    #                     turtle.exitonclick()
-    #             except:
-    #                 pass
-
-
-    # def checkIfFull(self):
-    #     full = True
-    #     for colnum in range(4):
-    #         for rownum in range(4):
-    #             if isinstance(self.grid[colnum][rownum], EmptySpace):
-    #                 full = False
-    #     if full == True:
-    #         print("Board is full - no winner! You should play again :)")
                 
+    def restart(self,x,y):
+        # print x,y
+        if int(x) in range(-80,0):
+            if int(y) in range(70,80):
+                print "minmax"
+                turtle.clearscreen()
+                self.algo=minimax
+                self.screenSetup(self.algo)
+                return True
+            elif int(y) in range(50,60):
+                print "alphabeta"
+                turtle.clearscreen()
+                self.algo=alphabeta
+                self.screenSetup(self.algo)
+                return True
+            elif int(y) in range(35,45):
+                print "heuristic"
+                turtle.clearscreen()
+                self.algo=myminimax
+                self.screenSetup(self.algo)
+                return True
+            elif int(y) in range(25,35):
+                print "exit"
+                turtle.bye()
+                return True
+        else :
+            return False
+
+    def resultofgame(self,value):
+        if value== 1:
+            self.erasable.clear()
+            self.drawer.goto(-80,10)
+            self.erasable = erasableWrite(self.drawer, "MACHINE WINS", font=("Arial", 20, "normal"), reuse=self.erasable)
+            print "Winner Bot"
+            print "GAMEOVER"
+            self.screen.onclick(self.restart)
+            return True
+        elif value==-1:
+            self.erasable.clear()
+            self.drawer.goto(-80,10)
+            self.erasable = erasableWrite(self.drawer, "HUMAN WINS", font=("Arial", 20, "normal"), reuse=self.erasable)
+            print "Winner Human"
+            print "GAMEOVER"
+            self.screen.onclick(self.restart)
+            return True
+        elif value==0:
+            self.erasable.clear()
+            self.drawer.goto(-80,10)
+            self.erasable = erasableWrite(self.drawer, "ITS DRAW", font=("Arial", 20, "normal"), reuse=self.erasable)
+            print "DRAW"
+            print "GAMEOVER"
+            self.screen.onclick(self.restart)
+            return True
+        else: return False
 
     def clicked(self, x, y):
         # print self.seen
         # print self.player
+        if self.restart(x,y):
+            return
         if self.player==2:
             self.x = x
             self.y = y
@@ -225,32 +251,25 @@ class ConnectThree:
                 print("Column full - try another column.")
                 return
             isterminal,value=terminal_test(mystate(self.board,None,1),1)
+            # print get_size(mystate(self.board,None,1))
             if isterminal:
-                if value== 1:
-                    print "Winner Bot"
-                    print "GAMEOVER"
-                    self.screen.onclick(None)
-                    return
-                elif value==-1:
-                    print "Winner Human"
-                    print "GAMEOVER"
-                    self.screen.onclick(None)
-                    return
-                elif value==0:
-                    print "DRAW"
-                    print "GAMEOVER"
-                    self.screen.onclick(None)
+                if self.resultofgame(value):
                     return
             else:
                 pass
                 # print "Game ON"
 
         # elif self.player==1:
-        
         print "bot's turn"
+        self.erasable.clear()
+        self.drawer.goto(-80,10)
+        self.erasable = erasableWrite(self.drawer, "Wait!! Its BOT'S TURN", font=("Arial", 20, "normal"), reuse=self.erasable)
         # self.column=minimax(mystate(self.board,None,1),1,self.seen)
         # self.column=alphabeta(mystate(self.board,None,1),1)
-        self.column=myminimax(mystate(self.board,None,1),1,self.seen)
+        t1=time()
+        self.column=self.algo(mystate(self.board,None,1),1,self.seen)
+        print round(time()-t1,3)
+        print len(self.seen)
         self.spacex=(25*(self.column-1))
         columnlist = self.board[self.column-1]
         spaceylist = [75, 50, 25, 0]#, 100, 125, 150, 175, 200, 225]
@@ -273,24 +292,57 @@ class ConnectThree:
 
         isterminal,value=terminal_test(mystate(self.board,None,1),1)
         if isterminal:
-            if value== 1:
-                print "Winner Bot"
-                print "GAMEOVER"
-                self.screen.onclick(None)
-            elif value==2:
-                print "Winner Human"
-                print "GAMEOVER"
-                self.screen.onclick(None)
-            elif value==0:
-                print "DRAW"
-                print "GAMEOVER"
-                self.screen.onclick(None)
+            if self.resultofgame(value):
+                return
         else:
             print "your turn"
+            self.erasable.clear()
+            self.drawer.goto(-80,10)
+            self.erasable = erasableWrite(self.drawer, "YOUR TURN", font=("Arial", 20, "normal"), reuse=self.erasable)
                         # print "Game ON"
             # self.checkForWinner()
             # self.checkIfFull()
 
+def results():
+    screen = turtle.Screen()
+    screen.setup(width=400,height=600)
+    # self.screen.reset()
+    screen.setworldcoordinates(-10,0,110,130)
+    screen.bgcolor("white")
+    screen.tracer(0)
+    t = turtle.Turtle()
+    t.hideturtle()
+    t.up()
+    t.goto(0,120)
+    t.write("R1  : 65752", font=("Arial", 16, "normal"))
+    t.goto(0,110)
+    t.write("R2  : 1088 Bytes", font=("Arial", 16, "normal"))
+    t.goto(0,100)
+    t.write("R3 : 16", font=("Arial", 16, "normal"))
+    t.goto(0,90)
+    t.write("R4 : 9.85 sec", font=("Arial", 16, "normal"))
+    t.goto(0,80)
+    t.write("R5 : 0.0067 nodes per microsec", font=("Arial", 16, "normal"))
+    t.goto(0,70)
+    t.write("R6 : 2733", font=("Arial", 16, "normal"))
+    t.goto(0,60)
+    t.write("R7 : 0.9585",font=("Arial", 16, "normal"))
+    t.goto(0,50)
+    t.write("R8 : 0.42 sec", font=("Arial", 16, "normal"))
+    t.goto(0,40)
+    t.write("R9 : 68MB vs 3MB", font=("Arial", 16, "normal"))
+    t.goto(0,30)
+    t.write("R10 : 9.94 sec vs 0.382 sec", font=("Arial", 16, "normal"))
+    t.goto(0,20)
+    t.write("R11 : 10 - M always wins", font=("Arial", 16, "normal"))
+    t.goto(0,10)
+    t.write("R12 : 10 - M always wins", font=("Arial", 16, "normal"))
+    t.goto(0,0)
+    t.write("R13 : 9.85 sec vs 0.42 sec", font=("Arial", 16, "normal"))
+    
 if __name__=="__main__":                
-    play = ConnectThree()
+    # play = ConnectThree("myminimax")
+    # turtle.done()
+    # print"hey"
+    results()
     turtle.done()
